@@ -6,6 +6,7 @@
 board input_board;
 const int MAX_MOVES = 1e8;
 const int MIN_MOVES = 3;
+const int MAX_DIMENSION = 20;
 
 // compare the file name with the dimentions of the current board.
 bool compare_name(char* file_name, string prefix_input){
@@ -26,7 +27,7 @@ bool compare_name(char* file_name, string prefix_input){
     if(file_name[size-3] != 't') return false;
     
     // check if is the same dimention as the generated.
-    if(aux == prefix_input) return true;
+    if(aux.substr(0, d_pos+1) == prefix_input) return true;
 
     return false;
 }
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]){
     srand(time(NULL));
 
     // Creating only square inputs.
-    int X = rand()%15;
+    int X = rand()%MAX_DIMENSION;
     input_board.initialize_final_state(X, X);
     cout << "Board dimension: " << X << ' ' << X << '\n';
 
