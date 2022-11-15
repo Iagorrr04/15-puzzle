@@ -2,3 +2,5 @@
 .obsidian
 
 *.out
+
+tempcomp.bash
