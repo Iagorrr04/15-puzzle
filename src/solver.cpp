@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include "heap.cpp"
 using namespace std;
 
 #ifndef ALGORITHM
@@ -130,7 +131,7 @@ auto reconstruct_path(const map<hash_t, pair<hash_t, Action>> &visited)
     }
     reverse(actions_path.begin(), actions_path.end());
 
-    best_match.depth = actions_path.size() - 1;
+    best_match.depth = (int)actions_path.size() - 1;
     return actions_path;
 }
 
@@ -237,7 +238,8 @@ auto astar(const State &initial, const State &target)
         // return scores[a.hash()].second > scores[b.hash()].second;
     };
 
-    priority_queue<State, vector<State>, decltype(heuristic)> pq(heuristic);
+    // priority_queue<State, vector<State>, decltype(heuristic)> pq(heuristic);
+    PriorityQueue<State> pq(heuristic);
     pq.emplace(initial);
 
     map<hash_t, pair<hash_t, Action>> visited;
@@ -340,7 +342,7 @@ void solve(board_t &board, const board_t &target)
 #endif
 }
 
-int main(int argc, char **argv)
+int main()
 {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr);
