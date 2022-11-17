@@ -73,12 +73,12 @@ struct State
         calculated_hash = 0;
     }
 
-    int compare(const State &other) const
+    int compare() const
     {
         auto dist = 0;
         for (auto i = 0; i < N; i++)
             for (auto j = 0; j < M; j++)
-                dist += abs(board[i][j] - other.board[i][j]);
+                dist += abs(i - board[i][j] / M) + abs(j - board[i][j] % M);
         return dist;
     }
 
@@ -135,9 +135,9 @@ auto reconstruct_path(const map<hash_t, pair<hash_t, Action>> &visited)
     return actions_path;
 }
 
-auto bfs(const State &initial, const State &target)
+auto bfs(const State &initial)
 {
-    best_match = {initial, 0, 0, initial.compare(target)};
+    best_match = {initial, 0, 0, initial.compare()};
 
     queue<State> q;
     q.emplace(initial);
@@ -157,7 +157,7 @@ auto bfs(const State &initial, const State &target)
             if (visited.count(hs))
                 continue;
 
-            auto dist = next.compare(target);
+            auto dist = next.compare();
             if (dist < best_match.distance)
                 best_match = {next, 0, iteration, dist};
 
@@ -170,9 +170,9 @@ auto bfs(const State &initial, const State &target)
     return visited;
 }
 
-auto dfs(const State &initial, const State &target)
+auto dfs(const State &initial)
 {
-    best_match = {initial, 0, 0, initial.compare(target)};
+    best_match = {initial, 0, 0, initial.compare()};
 
     stack<State> st;
     st.emplace(initial);
@@ -192,7 +192,7 @@ auto dfs(const State &initial, const State &target)
             if (visited.count(hs))
                 continue;
 
-            auto dist = next.compare(target);
+            auto dist = next.compare();
             if (dist < best_match.distance)
                 best_match = {next, 0, iteration, dist};
 
@@ -210,27 +210,13 @@ auto manhattan(const pair<int, int> &a, const pair<int, int> &b)
     return abs(a.first - b.first) + abs(a.second - b.second);
 }
 
-auto distance(const State &current, const State &target)
+auto astar(const State &initial)
 {
-    unordered_map<int, pair<int, int>> target_pos;
-    for (auto i = 0; i < N; i++)
-        for (auto j = 0; j < M; j++)
-            target_pos[target.board[i][j]] = make_pair(i, j);
-
-    auto dist = 0;
-    for (auto i = 0; i < N; i++)
-        for (auto j = 0; j < M; j++)
-            dist += manhattan(make_pair(i, j), target_pos[current.board[i][j]]);
-    return dist;
-}
-
-auto astar(const State &initial, const State &target)
-{
-    best_match = {initial, 0, 0, initial.compare(target)};
+    best_match = {initial, 0, 0, initial.compare()};
 
     // G and F scores
     map<hash_t, pair<int, int>> scores;
-    scores[initial.hash()] = make_pair(0, distance(initial, target));
+    scores[initial.hash()] = make_pair(0, initial.compare());
 
     auto heuristic = [&scores](const State &a, const State &b)
     {
@@ -262,9 +248,9 @@ auto astar(const State &initial, const State &target)
                 continue;
 
             next_scores.first = next_g_score;
-            next_scores.second = next_g_score + distance(next, target);
+            next_scores.second = next_g_score + next.compare();
 
-            auto dist = next.compare(target);
+            auto dist = next.compare();
             if (dist < best_match.distance)
                 best_match = {next, 0, iteration, dist};
 
@@ -326,10 +312,10 @@ void debug_path(State initial, const vector<Action> &actions_path)
     }
 }
 
-void solve(board_t &board, const board_t &target)
+void solve(board_t &board)
 {
     auto initial = State(board);
-    auto path = reconstruct_path(ALGORITHM(initial, State(target)));
+    auto path = reconstruct_path(ALGORITHM(initial));
     for (auto i = 1u; i < path.size(); i++)
     {
         initial.resolve_action(path[i]);
@@ -350,16 +336,13 @@ int main()
 
     cin >> N >> M;
 
-    board_t board(N, vector<int>(M)), target(N, vector<int>(M));
-    for (auto i = 0; i < N; i++)
-        for (auto j = 0; j < M; j++)
-            target[i][j] = i * M + j;
+    board_t board(N, vector<int>(M));
 
     for (auto i = 0; i < N; i++)
         for (auto j = 0; j < M; j++)
             cin >> board[i][j];
 
-    solve(board, move(target));
+    solve(board);
 
     return 0;
 }
