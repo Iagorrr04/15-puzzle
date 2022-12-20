@@ -158,10 +158,10 @@ struct State
 };
 
 // Nossa querida variação do a_star.
-auto astra(State start)
+pair<State, ull> astra(State start)
 {
     if (start.calc_heuristic() == 0)
-        return start;
+        return {start, 0};
 
     priority_queue<State> pq;// lembra que isso aqui é um astra.
     start.g_score = 0;
@@ -169,8 +169,10 @@ auto astra(State start)
 
     unordered_map<string, ull> g_scores; // total de movimentos que foram gasto para chegar nesse estado na melhor ocasião.
     ull total_states = 0;
+    ull total_iterations = 0;
     while (not pq.empty())
     {
+        ++total_iterations;
         State current = pq.top();
         pq.pop();
         // cout << "States: " << total_states++ << " moves: " << current.g_score << '\n';
@@ -186,14 +188,13 @@ auto astra(State start)
 
             ull next_heuristic = next.calc_heuristic();
             if (next_heuristic == 0)// significa que esse já é o estado final.
-                return next;
+                return {next, total_iterations};
 
             ull new_cost = current.g_score + 1;
             auto &current_scores = g_scores[next.board];
             if (current_scores != 0 and current_scores <= new_cost)
                 continue;
-
-            g_scores[next.board] = new_cost;
+            
             next.g_score = new_cost;
             next.f_score = new_cost + next_heuristic;
 
@@ -202,7 +203,7 @@ auto astra(State start)
             current_scores = next.g_score;
         }
     }
-    return start;
+    return {start, total_iterations};
 }
 
 int32_t main()
@@ -223,17 +224,20 @@ int32_t main()
     puzzle_t zero_position=0;
     for(i = 0; i < N*M; ++i){
             cin >> x;
+            cout << x << ' ';
             zero_position = x == 0 ? i : zero_position;
             initial_board += (char)x;
+            if(i % M == M-1) cout << '\n';
     }
     // inicializar o state inicial.
     State initial(initial_board, zero_position);
 
     // achar o estado final.
-    State finalzao_top = astra(initial);
+    auto [finalzao_top, total_i] = astra(initial);
 
     
     // só exibir a string de movimentos que conseguiu chegar até o final.
+    cout << "Iterations: " << total_i << '\n';
     cout << finalzao_top.moves.size() << '\n';
     cout << finalzao_top.moves << '\n';
     return 0;
