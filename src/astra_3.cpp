@@ -35,7 +35,7 @@ inline pair<puzzle_t, puzzle_t> uni_to_bi(const puzzle_t pos){
     return {pos/M,pos%M};
 }
 
-string final_board{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"};
+string final_board;
 
 struct State
 {
@@ -173,7 +173,7 @@ auto astra(State start)
     {
         State current = pq.top();
         pq.pop();
-        cout << "States: " << total_states++ << " moves: " << current.g_score << '\n';
+        // cout << "States: " << total_states++ << " moves: " << current.g_score << '\n';
         if(g_scores.size() > MAX_STATES){
             cerr << "Máximo de nós atingido !\n";
             break;
@@ -207,14 +207,16 @@ auto astra(State start)
 
 int32_t main()
 {
-    // fastio
-    // inicializar o finalboard.
-    int i;
-    for(i = 0; i < N*M; ++i) final_board[i]= (char)i;
+    fastio
+    // cout << "Sinta o poder do astra!\n";
 
+    int i;
     // leitura do input.
     cin >> N >> M;
     puzzle_t x;
+
+    // inicializar o finalboard.
+    for(i = 0; i < N*M; ++i) final_board[i]= (char)i;
 
 
     string initial_board;
@@ -224,7 +226,6 @@ int32_t main()
             zero_position = x == 0 ? i : zero_position;
             initial_board += (char)x;
     }
-
     // inicializar o state inicial.
     State initial(initial_board, zero_position);
 
@@ -233,8 +234,8 @@ int32_t main()
 
     
     // só exibir a string de movimentos que conseguiu chegar até o final.
-    cout << finalzao_top.moves << '\n';
     cout << finalzao_top.moves.size() << '\n';
+    cout << finalzao_top.moves << '\n';
     return 0;
         
 }

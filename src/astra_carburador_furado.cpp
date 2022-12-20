@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
-// Com a heurísticado indiano lá. 
+ 
 #include <bits/stdc++.h>
 using namespace std;
 #define fastio ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
@@ -25,12 +25,10 @@ const vector<int> UNI_DIRECTIONS{ 0, 0, 0, 0};// TODO: RECEBER N E m EM TEMPO DE
 inline int bi_to_uni(const pair<int, int> &bi){
     return bi.first*M + bi.second;
 }
-// Converte uma coordenada bidirecional pra uni.
+// Converte uma cordenada bidirecional pra uni.
 inline pair<int,int> uni_to_bi(const int pos){
-    return {pos/M,pos%M};
+    return {pos/M,pos%M-1};
 }
-
-string final_board;
 
 struct State
 {
@@ -42,7 +40,7 @@ struct State
     string moves;
 
     State(){}
-    State(const board_t &board_, int pos) : board{board_}, zero_pos{pos}, f_score{INT_MAX-666}, g_score{INT_MAX-666}, moves{}
+    State(const board_t &board, int pos) : board{board}, zero_pos{pos}
     {
     }
 
@@ -62,61 +60,27 @@ struct State
             if (dx)
                 actions.push_back(dx == 1 ? 'D' : 'U');
             else
-                actions.push_back(dy == 1 ? 'R' : 'L');
+                actions.push_back(dx == 1 ? 'R' : 'L');
         }
-
-        return actions;
     }
 
     // Calcula a heurística de maneira muito top :)
     int calc_heuristic(){
-        int manhas = 0;
+        int dist_heuristic = 0;
         for(int i = 0; i < N; ++i)
             for(int j = 0; j < M; ++j)
-                    manhas += abs(i - (int)board[i*M+j] / M) + abs(j - ((int)board[i*M+j] % M));
-        
-
-        int conflicts = 0;
-        int pR[(N * M) + 1];
-        int pC[(N * M) + 1];
-        for (int r = 0; r < N; r++) {
-            for (int c = 0; c < M; c++) {
-                pR[(int)board[r*M+c]] = r;
-                pC[(int)board[r*M+c]] = c;
-            }
-        }
-
-        // row conflicts - @checked_okay
-        for (int r = 0; r < N; r++) {
-            for (int cl = 0; cl < M; cl++) {
-                for (int cr = cl + 1; cr < N; cr++) {
-                    if (final_board[r*M+cl] && final_board[r*M+cr] && r == pR[final_board[r*M+cl]] && pR[final_board[r*M+cl]] == pR[final_board[r*M+cr]] && pC[final_board[r*M+cl]] > pC[final_board[r*M+cl]]) {
-                        conflicts++;
-                    }
-                }
-            }
-        }
-
-        // column conflicts -
-        for (int c = 0; c < N; c++) {
-            for (int rU = 0; rU < N; rU++) {
-                for (int rD = rU + 1; rD < N; rD++) {
-                    if (final_board[rU*M+c] && final_board[rD*M+c] && c == pC[final_board[rU*M+c]] && pC[final_board[rU*M+c]] == pC[final_board[rD*M+c]] &&
-                        pR[final_board[rU*M+c]] > pR[final_board[rD*M+c]]) {
-                        conflicts++;
-                    }
-                }
-            }
-        }
-
-        return manhas + 2 * conflicts;
+                dist_heuristic += abs(i - (int)board[i*M+j]) + abs(j - (int)board[i*M+j]);
+                
+        return 0;
     }
 
     // muda a posição, assumindo que já é uma posição válida.
-    void move(char action)
+    State move(char action)
     {
+        State new_state = *this;
+        new_state.moves.push_back(action);
+
         pair<int,int> pos = uni_to_bi(zero_pos);
-        moves.push_back(action);
         switch (action)
         {
             case 'U':
@@ -134,8 +98,9 @@ struct State
         }
 
         int new_zero_pos = bi_to_uni(pos);
-        swap(board[zero_pos], board[new_zero_pos]);
-        zero_pos = new_zero_pos;
+        swap(new_state.board[zero_pos], new_state.board[new_zero_pos]);
+        new_state.zero_pos = new_zero_pos;
+        return new_state;
     }
 
     // pra funcionar a fila de prioridade.
@@ -147,30 +112,26 @@ struct State
 };
 
 // Nossa querida variação do a_star.
-auto astra(State start)
+auto astra(const State &start)
 {
-    if (start.calc_heuristic() == 0)
-        return start;
-
     priority_queue<State> pq;// lembra que isso aqui é um astra.
-    start.g_score = 0;
     pq.emplace(start);
 
     // Dijkstra melhorado :)
     unordered_map<string, int> scores;
     while (not pq.empty())
     {
+        cout << "ranamamamamama\n";
         State current = pq.top();
         pq.pop();
-        
+
         for (auto action : current.get_possible_actions())
-        {   
-            State next = current;
-            next.move(action);
+        {
+            auto next = current.move(action);
             if (next.calc_heuristic() == 0)// significa que esse já é o estado final.
                 return next;
             auto new_cost = current.g_score + 1;
-            auto &current_scores = scores[next.board];
+            auto current_scores = scores[next.board];
             if (current_scores != 0 and current_scores <= new_cost)
                 continue;
 
@@ -186,28 +147,22 @@ auto astra(State start)
 
 int32_t main()
 {
-
     fastio
-    cout << "Sinta o poder do astra !\n";
-
 
     // leitura do input.
     cin >> N >> M;
     int x;
-
-    // inicializar o finalboard.
-    for(int i = 0; i < N*M; ++i) final_board.push_back((char)i);
-
-    string initial_board;
-    int zero_position=666;
+    string initial_board_t;
+    int zero_position;
     for(int i = 0; i < N*M; ++i){
             cin >> x;
             zero_position = x == 0 ? i : zero_position;
-            initial_board += (char) x;
+            initial_board_t += (char) x;
     }
 
     // inicializar o state.
-    State initial(initial_board, zero_position);
+    
+    State initial(initial_board_t, zero_position);
 
     // achar o estado final.
     State finalzao_top = astra(initial);
@@ -215,8 +170,8 @@ int32_t main()
     // reconstruir os movimentos usado para chegar até o final.
     // auto moves = reconstruct_path(finalzao_top);  // esse auto é uma string !
 
-    cout << finalzao_top.moves << '\n';
     cout << finalzao_top.moves.size() << '\n';
+
+    
     return 0;
-        
 }
