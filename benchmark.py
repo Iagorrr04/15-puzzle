@@ -4,6 +4,7 @@ import time
 size = '3x3'
 for input in os.listdir(f'input/samples/{size}'):
     print(f"Trying: {input}", end=" ")
+    os.system(f'mkdir benchmark/{size}')
     os.system(f'touch benchmark/{size}/{input}')
     
     start = time.perf_counter()
